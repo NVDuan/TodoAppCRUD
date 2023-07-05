@@ -1,11 +1,10 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
-//import 'package:http/http.dart';
 import 'package:http/http.dart' as http;
 
 class AddTodoPage extends StatefulWidget {
-  const AddTodoPage({super.key});
+  final Map? todo;
+  const AddTodoPage({super.key, this.todo});
 
   @override
   State<AddTodoPage> createState() => _AddTodoPageState();
@@ -14,12 +13,27 @@ class AddTodoPage extends StatefulWidget {
 class _AddTodoPageState extends State<AddTodoPage> {
   TextEditingController titleController = TextEditingController();
   TextEditingController descriptonController = TextEditingController();
+  bool isEdit = false;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    final todo = widget.todo;
+    if (todo != null) {
+      isEdit = true;
+      final title = todo['title'];
+      final description = todo['description'];
+      titleController.text = title;
+      descriptonController.text = description;
+    } else {}
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add todo'),
+        title: Text(isEdit ? 'Edit Todo' : 'Add todo'),
       ),
       body: ListView(
         padding: EdgeInsets.all(20),
@@ -42,12 +56,46 @@ class _AddTodoPageState extends State<AddTodoPage> {
             height: 20,
           ),
           ElevatedButton(
-            onPressed: submitData,
-            child: Text('Submit'),
+            onPressed: isEdit ? updateData : submitData,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(isEdit ? 'Update' : 'Submit'),
+            ),
           )
         ],
       ),
     );
+  }
+
+  Future<void> updateData() async {
+    final todo = widget.todo;
+    if (todo == null) {
+      print('không thể gọi data');
+      return;
+    }
+    final id = todo['_id'];
+    final title = titleController.text;
+    final description = descriptonController.text;
+    final body = {
+      "title": title,
+      "description": description,
+      "is_completed": false
+    };
+
+    //submit update data to the sever
+    final url = 'https://api.nstack.in/v1/todos/$id';
+    final uri = Uri.parse(url);
+    final respone = await http.put(
+      uri,
+      body: jsonEncode(body),
+      headers: {'Content-Type': 'application/json'},
+    );
+    //show success and fail message
+    if (respone.statusCode == 200) {
+      showSuccessMessage('Updation Success');
+    } else {
+      showErrowMessage('Updation Failed');
+    }
   }
 
   Future<void> submitData() async {
@@ -58,6 +106,8 @@ class _AddTodoPageState extends State<AddTodoPage> {
       "description": description,
       "is_completed": false
     };
+
+    //submit data to the sever
     final url = 'https://api.nstack.in/v1/todos?page=1&limit=10';
     final uri = Uri.parse(url);
     final respone = await http.post(
@@ -69,13 +119,13 @@ class _AddTodoPageState extends State<AddTodoPage> {
       titleController.text = '';
       descriptonController.text = '';
       print('success');
-      showSuccessMessenger('Creating Success');
+      showSuccessMessage('Creating Success');
     } else {
-      showErrowMessenger('Creation Failed');
+      showErrowMessage('Creation Failed');
     }
   }
 
-  void showSuccessMessenger(String messenger) {
+  void showSuccessMessage(String messenger) {
     final snackBar = SnackBar(
       content: Text(
         messenger,
@@ -86,7 +136,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-  void showErrowMessenger(String messenger) {
+  void showErrowMessage(String messenger) {
     final snackBar = SnackBar(
       content:
           Text(messenger, style: TextStyle(fontSize: 16, color: Colors.white)),
