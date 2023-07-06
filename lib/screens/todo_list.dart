@@ -36,44 +36,57 @@ class _TodoListPageState extends State<TodoListPage> {
           ),
           replacement: RefreshIndicator(
             onRefresh: fetchTodo,
-            child: ListView.builder(
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final item = items[index] as Map;
-                  final id = item['_id'];
-                  return ListTile(
-                    leading: CircleAvatar(child: Text('${index + 1}')),
-                    title: Text(item['title']),
-                    subtitle: Text(item['description']),
-                    trailing: PopupMenuButton(
-                      onSelected: (value) {
-                        if (value == 'edit') {
-                          //open edit menu
-                          navigateToEditPage(item);
-                        } else if (value == 'delete') {
-                          //delete and refresh the item
-                          deleteById(id);
-                        }
-                      },
-                      icon: Transform.rotate(
-                        angle: 1.5708, // Góc xoay 90 độ (90 độ = pi/2 radian)
-                        child: Icon(Icons.more_vert),
+            child: Visibility(
+              visible: items.isNotEmpty,
+              replacement: Center(
+                child: Text(
+                  'No Items',
+                  style: TextStyle(fontSize: 20),
+                ),
+              ),
+              child: ListView.builder(
+                  padding: EdgeInsets.all(12),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final item = items[index] as Map;
+                    final id = item['_id'] as String;
+                    return Card(
+                      child: ListTile(
+                        leading: CircleAvatar(child: Text('${index + 1}')),
+                        title: Text(item['title']),
+                        subtitle: Text(item['description']),
+                        trailing: PopupMenuButton(
+                          onSelected: (value) {
+                            if (value == 'edit') {
+                              //open edit menu
+                              navigateToEditPage(item);
+                            } else if (value == 'delete') {
+                              //delete and refresh the item
+                              deleteById(id);
+                            }
+                          },
+                          icon: Transform.rotate(
+                            angle:
+                                1.5708, // Góc xoay 90 độ (90 độ = pi/2 radian)
+                            child: Icon(Icons.more_vert),
+                          ),
+                          itemBuilder: (context) {
+                            return [
+                              PopupMenuItem(
+                                child: Text('edit'),
+                                value: 'edit',
+                              ),
+                              PopupMenuItem(
+                                child: Text('delete'),
+                                value: 'delete',
+                              ),
+                            ];
+                          },
+                        ),
                       ),
-                      itemBuilder: (context) {
-                        return [
-                          PopupMenuItem(
-                            child: Text('edit'),
-                            value: 'edit',
-                          ),
-                          PopupMenuItem(
-                            child: Text('delete'),
-                            value: 'delete',
-                          ),
-                        ];
-                      },
-                    ),
-                  );
-                }),
+                    );
+                  }),
+            ),
           ),
         ),
         floatingActionButton: FloatingActionButton.extended(
